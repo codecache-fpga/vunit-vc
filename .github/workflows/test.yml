@@ -15,5 +15,5 @@ jobs:
           cache: 'pip' # caching pip dependencies
       - name: Set up Python
         run: |
-          pip install -r tsfpga/tsfpga/requirements.txt
+          python -m pip install --user -r tsfpga/tsfpga/requirements.txt
       - uses: VUnit/vunit_action@v0.1.0
