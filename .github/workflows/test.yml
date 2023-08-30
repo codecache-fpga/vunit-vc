@@ -11,6 +11,6 @@ jobs:
         with:
           submodules: 'recursive'
       - name: Install python dependencies
-          run: pip install -r tsfpga/tsfpga/requirements.txt
+        run: pip install -r tsfpga/tsfpga/requirements.txt
       - name: Run  simulations
-          run: python run.py
+        run: python run.py
