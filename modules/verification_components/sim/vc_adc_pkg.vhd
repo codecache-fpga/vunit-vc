@@ -19,9 +19,9 @@ package vc_adc_pkg is
     num_bits    : positive;
   end record;
 
+  impure function new_vc_adc(ref_voltage : real; num_bits : positive) return vc_adc_t;
   function get_num_bits(vc : vc_adc_t) return positive;
   function calc_output(vc : vc_adc_t; voltage : real) return std_logic_vector;
-  function new_vc_adc(ref_voltage : real; num_bits : positive) return vc_adc_t;
 
   procedure vc_adc_set_value(signal net : inout network_t; vc : vc_adc_t; voltage : real);
 
@@ -29,7 +29,7 @@ end package;
 
 package body vc_adc_pkg is
 
-  function new_vc_adc(ref_voltage : real; num_bits : positive) return vc_adc_t is
+  impure function new_vc_adc(ref_voltage : real; num_bits : positive) return vc_adc_t is
   begin
     return (actor       => new_actor,
             ref_voltage => ref_voltage,

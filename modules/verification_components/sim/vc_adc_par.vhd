@@ -18,7 +18,6 @@ entity vc_adc_par is
   generic(
     vc : vc_adc_t
   );
-
   port(
     sclk  : in  std_logic;
     dout  : out std_logic_vector(get_num_bits(vc) - 1 downto 0);
@@ -29,17 +28,13 @@ end entity;
 architecture sim of vc_adc_par is
 
   procedure process_set_value(variable msg : in msg_t; signal dout : out std_logic_vector) is
-    variable output_value : std_logic_vector(get_num_bits(vc) - 1 downto 0);
     variable voltage      : real;
-    variable bit_num      : natural := 0;
   begin
     wait until falling_edge(cnvst);
 
     voltage      := pop_real(msg);
 
     dout <= calc_output(vc, voltage);
-
-    bit_num := get_num_bits(vc) - 1;
   end procedure;
 
 begin

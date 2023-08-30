@@ -2,7 +2,6 @@
 # Copyright (c) Sebastian Hellgren. All rights reserved.
 # --------------------------------------------------------------------------------------------------
 
-# Standard libraries
 import sys
 from pathlib import Path
 
