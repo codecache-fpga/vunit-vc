@@ -7,6 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     container: ghdl/vunit:mcode
     steps:
+      - name: Install git on container
+        run: |
+          apt update
+          apt install -y git
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
