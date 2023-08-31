@@ -12,11 +12,11 @@ library vunit_lib;
 context vunit_lib.vunit_context;
 context vunit_lib.vc_context;
 
-use work.vc_adc_pkg.all;
+use work.adc_pkg.all;
 
-entity vc_adc_par is
+entity adc_par is
   generic(
-    vc : vc_adc_t
+    vc : adc_t
   );
   port(
     sclk  : in  std_logic;
@@ -25,7 +25,7 @@ entity vc_adc_par is
   );
 end entity;
 
-architecture sim of vc_adc_par is
+architecture sim of adc_par is
 
   procedure process_set_value(variable msg : in msg_t; signal dout : out std_logic_vector) is
     variable voltage      : real;
@@ -46,7 +46,7 @@ begin
     receive(net, vc.actor, request_message);
     msg_type := message_type(request_message);
 
-    if msg_type = vc_adc_set_value_msg then
+    if msg_type = adc_set_value_msg then
       process_set_value(request_message, dout);
     else
       handle_wait_until_idle(net, msg_type, request_message);
