@@ -12,11 +12,11 @@ library vunit_lib;
 context vunit_lib.vunit_context;
 context vunit_lib.vc_context;
 
-use work.vc_adc_pkg.all;
+use work.adc_pkg.all;
 
 entity vc_adc_spi is
   generic(
-    vc : vc_adc_t
+    vc : adc_t
   );
 
   port(
@@ -61,7 +61,7 @@ begin
     receive(net, vc.actor, request_message);
     msg_type := message_type(request_message);
 
-    if msg_type = vc_adc_set_value_msg then
+    if msg_type = adc_set_value_msg then
       process_set_value(request_message, dout);
     else
       handle_wait_until_idle(net, msg_type, request_message);
