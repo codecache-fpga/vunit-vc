@@ -1,3 +1,4 @@
+-- Simple SPI slave supporting SPI mode 0 (CPOL = 0, CPHA = 0)
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -11,13 +12,12 @@ use work.spi_slave_pkg.all;
 
 entity spi_slave is
   generic(
-    vc : spi_slave_t
+    spi_slave : spi_slave_t
   );
-
   port(
     sclk : in  std_logic;
-    mosi : in std_logic;
-    miso : out  std_logic;
+    mosi : in  std_logic;
+    miso : out std_logic;
     cs   : in  std_logic
   );
 end entity;
@@ -29,35 +29,32 @@ architecture sim of spi_slave is
                                 signal   miso : out std_logic;
                                 signal   mosi : in std_logic
                                ) is
-    variable bit_num        : natural := 0;
+    variable bit_num        : natural := spi_num_bits;
     variable spi_tx, spi_rx : std_logic_vector(spi_num_bits - 1 downto 0);
-    variable reply_msg      : msg_t;
+    variable reply_msg      : msg_t   := new_msg(spi_transaction_msg);
   begin
     -- Read data to be sent on SPI bus from message
     spi_tx := pop(msg);
 
     wait until falling_edge(cs);
-    miso <= spi_tx(spi_tx'high);
-
-    wait until rising_edge(sclk);
-    spi_rx(bit_num) := mosi;
-     
-    bit_num := spi_num_bits - 1;
+    miso <= spi_tx(bit_num - 1);
 
     while bit_num > 0 loop
+
+      bit_num         := bit_num - 1;
       wait until rising_edge(sclk);
       spi_rx(bit_num) := mosi;
-      
-      wait until falling_edge(sclk);
-      miso <= spi_tx(bit_num);
 
-      bit_num := bit_num - 1;
+      if bit_num > 0 then
+        wait until falling_edge(sclk);
+        miso <= spi_tx(bit_num - 1);
+      end if;
     end loop;
 
-    spi_rx := (others => '0');
+    -- Add received data to msg
+    push(reply_msg, spi_rx);
 
     -- Reply with received data
-    push(reply_msg, spi_rx);
     reply(net, msg, reply_msg);
   end procedure;
 
@@ -67,7 +64,7 @@ begin
     variable request_message : msg_t;
     variable msg_type        : msg_type_t;
   begin
-    receive(net, vc.actor, request_message);
+    receive(net, spi_slave.actor, request_message);
     msg_type := message_type(request_message);
 
     if msg_type = spi_transaction_msg then
