@@ -46,15 +46,9 @@ begin
     variable spi_data_rx, spi_data_tx : std_logic_vector(spi_num_bits - 1 downto 0);
     variable future                   : msg_t;
     variable channel_closed           : boolean;
-  begin
-    test_runner_setup(runner, runner_cfg);
 
-    wait until rising_edge(clk);
-
-    if run("single_byte_test") then
-      -- Use a so called "future" with a non-blocking transaction which queues up
-      -- a transaction in the slave, and then reads the reply later.
-
+    procedure test_spi_single_byte is
+    begin
       -- Generate random indata
       data_in     <= rnd.RandSlv(data_in'length);
       spi_data_tx := rnd.RandSlv(spi_data_tx'length);
@@ -77,6 +71,27 @@ begin
       check_equal(spi_data_rx, data_in, "Slave received wrong data");
       check_equal(data_out, spi_data_tx, "Master received wrong data");
       check_true(channel_closed, "SPI channel was not closed");
+    end procedure;
+  begin
+    test_runner_setup(runner, runner_cfg);
+
+    wait until rising_edge(clk);
+
+    if run("single_byte_test") then
+      -- Use a so called "future" with a non-blocking transaction which queues up
+      -- a transaction in the slave, and then reads the reply later.
+
+      test_spi_single_byte;
+
+      -- Ensure that all queued transactions has been consumed
+      wait_until_idle(net, spi_slave);
+    elsif run("test_many_single_byte") then
+      -- Use a so called "future" with a non-blocking transaction which queues up
+      -- a transaction in the slave, and then reads the reply later.
+
+      for i in 0 to 100 - 1 loop
+        test_spi_single_byte;
+      end loop;
 
       -- Ensure that all queued transactions has been consumed
       wait_until_idle(net, spi_slave);
@@ -85,7 +100,7 @@ begin
     test_runner_cleanup(runner);
   end process;
 
-  test_runner_watchdog(runner, 1 us);
+  test_runner_watchdog(runner, 100 us);
 
   spi_slave_inst : entity verification_components.spi_slave
     generic map(
