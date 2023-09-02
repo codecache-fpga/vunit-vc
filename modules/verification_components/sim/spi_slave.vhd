@@ -32,11 +32,12 @@ architecture sim of spi_slave is
     variable bit_num        : natural := spi_num_bits;
     variable spi_tx, spi_rx : std_logic_vector(spi_num_bits - 1 downto 0);
     variable reply_msg      : msg_t   := new_msg(spi_transaction_msg);
+    variable channel_closed : boolean;
   begin
     -- Read data to be sent on SPI bus from message
     spi_tx := pop(msg);
 
-    wait until falling_edge(cs);
+    wait until falling_edge(cs) or sclk = '1';
     miso <= spi_tx(bit_num - 1);
 
     while bit_num > 0 loop
@@ -51,11 +52,22 @@ architecture sim of spi_slave is
       end if;
     end loop;
 
+    -- Determine if channel is closed or not
+    wait until cs'event or sclk'event;
+    
+    if rising_edge(cs) then
+      channel_closed := true;
+    elsif rising_edge(sclk) then
+      channel_closed := false;
+    end if;
+
     -- Add received data to msg
     push(reply_msg, spi_rx);
+    push(reply_msg, channel_closed);
 
     -- Reply with received data
     reply(net, msg, reply_msg);
+
   end procedure;
 
 begin

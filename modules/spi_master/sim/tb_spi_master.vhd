@@ -1,3 +1,4 @@
+
 library IEEE;
 use IEEE.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -44,37 +45,16 @@ begin
   main : process
     variable spi_data_rx, spi_data_tx : std_logic_vector(spi_num_bits - 1 downto 0);
     variable future                   : msg_t;
+    variable channel_closed           : boolean;
   begin
     test_runner_setup(runner, runner_cfg);
 
     wait until rising_edge(clk);
 
     if run("single_byte_test") then
-      
-      -- Generate random indata
-      data_in     <= rnd.RandSlv(data_in'length);
-      spi_data_tx := rnd.RandSlv(spi_data_tx'length);
-
-      -- In this case for blocking transaction to work, 
-      -- we have to be careful to avoid race conditions
-      data_in_valid <= '1';
-      spi_transaction(net, spi_slave, spi_data_tx, spi_data_rx);
-      wait until rising_edge(clk);
-
-      -- Wait for master to receive slave data
-      wait until rising_edge(clk) and data_out_valid = '1';
-
-      -- Check that data matched
-      check_equal(spi_data_rx, data_in, "Slave received wrong data");
-      check_equal(data_out, spi_data_tx, "Master received wrong data");
-      
-      -- Ensure that all queued transactions has been consumed
-      wait_until_idle(net, spi_slave);
-    
-    elsif run("single_byte_test_future") then
       -- Use a so called "future" with a non-blocking transaction which queues up
       -- a transaction in the slave, and then reads the reply later.
-      
+
       -- Generate random indata
       data_in     <= rnd.RandSlv(data_in'length);
       spi_data_tx := rnd.RandSlv(spi_data_tx'length);
@@ -88,7 +68,7 @@ begin
       data_in_valid <= '0';
 
       -- Wait for slave to receive data
-      receive_spi_transaction(net, spi_data_rx, future);
+      receive_spi_transaction(net, future, spi_data_rx, channel_closed);
 
       -- Wait for master to receive slave data
       wait until rising_edge(clk) and data_out_valid = '1';
@@ -96,7 +76,8 @@ begin
       -- Check that data matched
       check_equal(spi_data_rx, data_in, "Slave received wrong data");
       check_equal(data_out, spi_data_tx, "Master received wrong data");
-      
+      check_true(channel_closed, "SPI channel was not closed");
+
       -- Ensure that all queued transactions has been consumed
       wait_until_idle(net, spi_slave);
     end if;
