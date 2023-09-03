@@ -12,7 +12,7 @@ use work.spi_slave_pkg.all;
 
 entity spi_slave is
   generic(
-    spi_slave : spi_slave_t
+    slave : spi_slave_t
   );
   port(
     sclk : in  std_logic;
@@ -76,7 +76,7 @@ begin
     variable request_message : msg_t;
     variable msg_type        : msg_type_t;
   begin
-    receive(net, spi_slave.actor, request_message);
+    receive(net, slave.actor, request_message);
     msg_type := message_type(request_message);
 
     if msg_type = spi_transaction_msg then

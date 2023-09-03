@@ -27,6 +27,7 @@ entity spi_master is
     
     -- Data out interface
     data_out_valid : out std_logic;
+    data_out_tready : in std_logic;
     data_out       : out std_logic_vector(spi_num_bits - 1 downto 0);
     
     -- SPI interface
