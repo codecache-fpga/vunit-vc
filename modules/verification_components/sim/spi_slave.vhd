@@ -23,64 +23,85 @@ entity spi_slave is
 end entity;
 
 architecture sim of spi_slave is
-
-  procedure process_transaction(signal   net  : inout network_t;
-                                variable msg  : inout msg_t;
-                                signal   miso : out std_logic;
-                                signal   mosi : in std_logic
-                               ) is
-    variable bit_num        : natural := spi_num_bits;
-    variable spi_tx, spi_rx : std_logic_vector(spi_num_bits - 1 downto 0);
-    variable reply_msg      : msg_t   := new_msg(spi_transaction_msg);
-    variable channel_closed : boolean;
-  begin
-    -- Read data to be sent on SPI bus from message
-    spi_tx := pop(msg);
-
-    wait until falling_edge(cs) or sclk = '1';
-    miso <= spi_tx(bit_num - 1);
-
-    while bit_num > 0 loop
-
-      bit_num         := bit_num - 1;
-      wait until rising_edge(sclk);
-      spi_rx(bit_num) := mosi;
-
-      if bit_num > 0 then
-        wait until falling_edge(sclk);
-        miso <= spi_tx(bit_num - 1);
-      end if;
-    end loop;
-
-    -- Determine if channel is closed or not
-    wait until cs'event or sclk'event;
-    
-    if rising_edge(cs) then
-      channel_closed := true;
-    elsif rising_edge(sclk) then
-      channel_closed := false;
-    end if;
-
-    -- Add received data to msg
-    push(reply_msg, spi_rx);
-    push(reply_msg, channel_closed);
-
-    -- Reply with received data
-    reply(net, msg, reply_msg);
-
-  end procedure;
-
+  signal miso_int : std_logic;
 begin
 
-  msg_handler : process
+  tx_msg_handler : process
     variable request_message : msg_t;
     variable msg_type        : msg_type_t;
+
+    procedure process_tx_transaction(variable msg : inout msg_t) is
+      variable spi_tx : std_logic_vector(spi_num_bits - 1 downto 0);
+    begin
+      spi_tx := pop(msg);
+
+      for bit_num in spi_tx'high downto 0 loop
+        miso_int <= spi_tx(bit_num);
+        wait until falling_edge(sclk);
+      end loop;
+    end procedure;
+
   begin
-    receive(net, slave.actor, request_message);
+    receive(net, slave.tx_actor, request_message);
+
     msg_type := message_type(request_message);
 
-    if msg_type = spi_transaction_msg then
-      process_transaction(net, request_message, miso, mosi);
+    if msg_type = spi_slave_msg then
+      process_tx_transaction(request_message);
+    else
+      handle_wait_until_idle(net, msg_type, request_message);
+    end if;
+  end process;
+
+  miso <= miso_int when cs = '0' else 'U';
+
+  rx_msg_handler : process
+    variable request_message : msg_t;
+    variable msg_type        : msg_type_t;
+
+    procedure process_rx_transaction(variable msg : inout msg_t) is
+      variable reply_msg               : msg_t := new_msg(spi_slave_reply_msg);
+      variable spi_rx, expected        : std_logic_vector(spi_num_bits - 1 downto 0);
+      variable channel_closed          : boolean;
+      variable channel_closed_expected : boolean;
+    begin
+      for bit_num in spi_rx'range loop
+        wait until rising_edge(sclk);
+        spi_rx(bit_num) := mosi;
+      end loop;
+
+      -- Determine if channel is closed or not
+      wait until cs'event or sclk'event;
+
+      if rising_edge(cs) then
+        channel_closed := true;
+      elsif rising_edge(sclk) then
+        channel_closed := false;
+      end if;
+
+      -- Add received data to msg
+      if message_type(msg) = spi_slave_check_msg then
+        expected                := pop(msg);
+        channel_closed_expected := pop(msg);
+
+        check_equal(spi_rx, expected);
+        check_equal(channel_closed, channel_closed_expected);
+
+      elsif message_type(msg) = spi_slave_msg then
+        push(reply_msg, spi_rx);
+        push(reply_msg, channel_closed);
+
+        -- Reply with received data
+        reply(net, msg, reply_msg);
+
+      end if;
+    end procedure;
+  begin
+    receive(net, slave.rx_actor, request_message);
+    msg_type := message_type(request_message);
+
+    if msg_type = spi_slave_msg or msg_type = spi_slave_check_msg then
+      process_rx_transaction(request_message);
     else
       handle_wait_until_idle(net, msg_type, request_message);
     end if;

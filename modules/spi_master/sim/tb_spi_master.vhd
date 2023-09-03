@@ -56,9 +56,6 @@ begin
   clk <= not clk after clk_period / 2;
 
   main : process
-    variable future         : msg_t;
-    variable channel_closed : boolean;
-
     procedure new_spi_transaction(length : positive) is
     begin
       push_axi_stream(net, trx_axi_stream_master, std_logic_vector(to_unsigned(length, spi_num_bits)));
@@ -69,23 +66,27 @@ begin
       variable spi_master_tx, spi_master_rx : std_logic_vector(spi_num_bits - 1 downto 0);
       variable axi_stream_reference         : axi_stream_reference_t;
       variable tlast                        : std_logic;
+      variable channel_closed               : boolean;
     begin
       -- Generate random indata
       spi_master_tx := rnd.RandSlv(spi_master_tx'length);
       spi_slave_tx  := rnd.RandSlv(spi_slave_tx'length);
 
-      -- Queue SPI transaction
-      new_spi_transaction(1);
-
       -- Send in data on axi stream channel
       push_axi_stream(net, data_axi_stream_master, spi_master_tx);
-      send_spi_transaction(net, spi_slave, spi_slave_tx, future);
+      push_spi_tx_transaction(net, spi_slave, spi_slave_tx);
+
+      -- Start transaction
+      new_spi_transaction(length => 1);
 
       -- Open data out receive channel
       pop_axi_stream(net, data_axi_stream_slave, axi_stream_reference);
 
       -- Wait for slave to receive data
-      receive_spi_transaction(net, future, spi_slave_rx, channel_closed);
+      await_spi_rx_transaction(net,
+                               spi_slave,
+                               spi_slave_rx,
+                               channel_closed);
 
       await_pop_axi_stream_reply(net, axi_stream_reference, tdata => spi_master_rx, tlast => tlast);
 
@@ -94,6 +95,39 @@ begin
       check_equal(spi_master_rx, spi_slave_tx, "Master received wrong data");
       check_true(channel_closed, "SPI channel was not closed");
     end procedure;
+
+    procedure test_spi_multi_byte(length : positive) is
+      variable spi_slave_tx   : std_logic_vector(spi_num_bits - 1 downto 0);
+      variable spi_master_tx  : std_logic_vector(spi_num_bits - 1 downto 0);
+      variable channel_closed : boolean;
+    begin
+      -- Start transaction
+      new_spi_transaction(length => length);
+
+      for i in 0 to length - 1 loop
+        -- Generate input data
+        spi_master_tx := x"AA";         --rnd.RandSlv(spi_master_tx'length);
+        spi_slave_tx  := x"AA";         --rnd.RandSlv(spi_slave_tx'length);
+
+        -- Send data to input stream 
+        push_axi_stream(net, data_axi_stream_master, spi_master_tx);
+
+        -- Push SPI tx transaction to slave, tell slave to check data
+        push_spi_tx_transaction(net, spi_slave, spi_slave_tx);
+
+        -- Queue non-blocking AXI stream checks on data output
+        check_axi_stream(net,
+                         data_axi_stream_slave,
+                         spi_slave_tx,
+                         msg      => "SPI master received wrong data",
+                         blocking => false
+                        );
+
+        channel_closed := i = length - 1;
+        check_spi_rx_transaction(net, spi_slave, spi_master_tx, channel_closed);
+      end loop;
+    end procedure;
+    variable transaction_length : positive;
 
   begin
     rnd.InitSeed(rnd'instance_name);
@@ -107,7 +141,6 @@ begin
 
       -- Ensure that all queued transactions has been consumed
       wait until busy = '0' and rising_edge(clk);
-      wait_until_idle(net, spi_slave);
 
     elsif run("test_many_single_byte") then
 
@@ -117,6 +150,20 @@ begin
 
       -- Ensure that all queued transactions has been consumed
       wait until busy = '0' and rising_edge(clk);
+
+    elsif run("test_short_multi_byte_transactions") then
+
+      for i in 1 to 4 loop
+        test_spi_multi_byte(i);
+      end loop;
+
+    elsif run("test_many_random_multi_byte_transactions") then
+      
+      for i in 0 to 100 - 1 loop
+        transaction_length := rnd.RandInt(1, 128);
+        test_spi_multi_byte(transaction_length);
+      end loop;
+
     end if;
 
     wait_until_idle(net, spi_slave);
@@ -127,7 +174,7 @@ begin
     test_runner_cleanup(runner);
   end process;
 
-  test_runner_watchdog(runner, 100 us);
+  test_runner_watchdog(runner, 10 ms);
 
   trx_axi_stream_master_inst : entity vunit_lib.axi_stream_master
     generic map(

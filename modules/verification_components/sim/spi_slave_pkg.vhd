@@ -9,27 +9,35 @@ context vunit_lib.vc_context;
 
 package spi_slave_pkg is
 
-  constant spi_transaction_msg : msg_type_t := new_msg_type("spi transaction");
+  constant spi_slave_msg       : msg_type_t := new_msg_type("spi slave msg");
+  constant spi_slave_check_msg : msg_type_t := new_msg_type("spi slave check msg");
+  constant spi_slave_reply_msg : msg_type_t := new_msg_type("spi slave reply msg");
 
   constant spi_num_bits : positive := 8;
 
   type spi_slave_t is record
-    actor : actor_t;
+    rx_actor : actor_t;
+    tx_actor : actor_t;
   end record;
 
   impure function new_spi_slave return spi_slave_t;
 
-  procedure send_spi_transaction(signal   net     : inout network_t;
-                                 spi_slave        : spi_slave_t;
-                                 variable data_tx : in std_logic_vector;
-                                 variable future  : inout msg_t
-                                );
-
-  procedure receive_spi_transaction(signal   net            : inout network_t;
-                                    variable future         : inout msg_t;
-                                    variable data_rx        : out std_logic_vector;
-                                    variable channel_closed : out boolean
+  procedure push_spi_tx_transaction(signal   net     : inout network_t;
+                                    spi_slave        : spi_slave_t;
+                                    variable data_tx : in std_logic_vector
                                    );
+
+  procedure await_spi_rx_transaction(signal   net            : inout network_t;
+                                     spi_slave               : spi_slave_t;
+                                     variable data_rx        : out std_logic_vector;
+                                     variable channel_closed : out boolean
+                                    );
+
+  procedure check_spi_rx_transaction(signal net              : inout network_t;
+                                     spi_slave               : spi_slave_t;
+                                     expected                : std_logic_vector;
+                                     channel_closed_expected : boolean
+                                    );
 
   procedure wait_until_idle(signal net : inout network_t; spi_slave : spi_slave_t);
 end package;
@@ -38,38 +46,58 @@ package body spi_slave_pkg is
 
   impure function new_spi_slave return spi_slave_t is
   begin
-    return (actor => new_actor);
+    return (rx_actor => new_actor,
+            tx_actor => new_actor
+           );
   end function;
 
   -- Send a single byte SPI transaction (non blocking)
-  procedure send_spi_transaction(signal   net     : inout network_t;
-                                 spi_slave        : spi_slave_t;
-                                 variable data_tx : in std_logic_vector;
-                                 variable future  : inout msg_t
-                                ) is
+  procedure push_spi_tx_transaction(signal   net     : inout network_t;
+                                    spi_slave        : spi_slave_t;
+                                    variable data_tx : in std_logic_vector
+                                   ) is
+    variable msg : msg_t := new_msg(spi_slave_msg);
   begin
-    future := new_msg(spi_transaction_msg);
-    push_std_ulogic_vector(future, data_tx);
-    send(net, spi_slave.actor, future);
+    push_std_ulogic_vector(msg, data_tx);
+    send(net, spi_slave.tx_actor, msg);
   end procedure;
 
   -- Receive a single byte SPI transaction based on previous sent transaction (blocking)
-  procedure receive_spi_transaction(signal   net            : inout network_t;
-                                    variable future         : inout msg_t;
-                                    variable data_rx        : out std_logic_vector;
-                                    variable channel_closed : out boolean
-                                   ) is
+  procedure await_spi_rx_transaction(signal   net            : inout network_t;
+                                     spi_slave               : spi_slave_t;
+                                     variable data_rx        : out std_logic_vector;
+                                     variable channel_closed : out boolean
+                                    ) is
+    variable msg       : msg_t := new_msg(spi_slave_msg);
     variable reply_msg : msg_t;
   begin
-    receive_reply(net, future, reply_msg);
+    send(net, spi_slave.rx_actor, msg);
+
+    receive_reply(net, msg, reply_msg);
     data_rx        := pop(reply_msg);
     channel_closed := pop(reply_msg);
+  end procedure;
+
+  -- Check a single byte SPI slave RX transaction (non-blocking)
+  -- This consumes a response in the slave
+  procedure check_spi_rx_transaction(signal net              : inout network_t;
+                                     spi_slave               : spi_slave_t;
+                                     expected                : std_logic_vector;
+                                     channel_closed_expected : boolean
+                                    ) is
+    variable msg : msg_t := new_msg(spi_slave_check_msg);
+  begin
+    push(msg, expected);
+    push(msg, channel_closed_expected);
+
+    send(net, spi_slave.rx_actor, msg);
   end procedure;
 
   -- Wait until SPI slave is idle
   procedure wait_until_idle(signal net : inout network_t; spi_slave : spi_slave_t) is
   begin
-    wait_until_idle(net, spi_slave.actor);
+    wait_until_idle(net, spi_slave.rx_actor);
+    wait_until_idle(net, spi_slave.tx_actor);
   end procedure;
 
 end package body;

@@ -12,29 +12,25 @@ use work.spi_master_pkg.all;
 
 entity spi_master is
   port(
-    clk            : in  std_logic;
-    busy           : out std_logic;
-    
+    clk             : in  std_logic;
+    busy            : out std_logic;
     -- Transaction interface
-    trx_in_valid   : in  std_logic;
-    trx_in_ready   : out std_logic;
-    trx_num_bytes  : in  natural;
-    
+    trx_in_valid    : in  std_logic;
+    trx_in_ready    : out std_logic;
+    trx_num_bytes   : in  natural;
     -- Data in interface
-    data_in_valid  : in  std_logic;
-    data_in_ready  : out std_logic;
-    data_in        : in  std_logic_vector(spi_num_bits - 1 downto 0);
-    
+    data_in_valid   : in  std_logic;
+    data_in_ready   : out std_logic;
+    data_in         : in  std_logic_vector(spi_num_bits - 1 downto 0);
     -- Data out interface
-    data_out_valid : out std_logic;
-    data_out_tready : in std_logic;
-    data_out       : out std_logic_vector(spi_num_bits - 1 downto 0);
-    
+    data_out_valid  : out std_logic;
+    data_out_tready : in  std_logic;
+    data_out        : out std_logic_vector(spi_num_bits - 1 downto 0);
     -- SPI interface
-    spi_sclk       : out std_logic;
-    spi_mosi       : out std_logic;
-    spi_miso       : in  std_logic;
-    spi_cs         : out std_logic := '1'
+    spi_sclk        : out std_logic;
+    spi_mosi        : out std_logic;
+    spi_miso        : in  std_logic;
+    spi_cs          : out std_logic := '1'
   );
 end entity;
 
@@ -43,8 +39,8 @@ architecture rtl of spi_master is
   signal spi_clk_en : std_logic;
 
   type spi_state_t is (idle, wait_for_next_data, transfer);
-  signal spi_state        : spi_state_t := idle;
-  
+  signal spi_state : spi_state_t := idle;
+
   signal data_rx : std_logic_vector(spi_num_bits - 1 downto 0);
 
   signal sclk_rising  : std_logic;
@@ -79,10 +75,10 @@ begin
         trx_in_ready <= '1';
 
         -- Wait for a new transaction
-        if trx_in_valid and trx_in_valid then
-          num_trx       := trx_num_bytes;
-          spi_state     <= wait_for_next_data;
-          data_in_ready <= '0';
+        if trx_in_valid and trx_in_ready then
+          num_trx      := trx_num_bytes;
+          spi_state    <= wait_for_next_data;
+          trx_in_ready <= '0';
         end if;
 
       when wait_for_next_data =>
@@ -96,7 +92,7 @@ begin
           num_trx := num_trx - 1;
 
           spi_state <= transfer;
-          spi_mosi  <= data_trx(spi_num_bits - 1 - bit_count);
+          spi_mosi  <= data_trx(spi_num_bits - 1);
 
           data_in_ready <= '0';
         end if;
