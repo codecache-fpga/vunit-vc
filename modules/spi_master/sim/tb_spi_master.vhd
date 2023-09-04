@@ -101,21 +101,19 @@ begin
       variable spi_master_tx  : std_logic_vector(spi_num_bits - 1 downto 0);
       variable channel_closed : boolean;
     begin
-      -- Start transaction
-      new_spi_transaction(length => length);
 
       for i in 0 to length - 1 loop
         -- Generate input data
-        spi_master_tx := x"AA";         --rnd.RandSlv(spi_master_tx'length);
-        spi_slave_tx  := x"AA";         --rnd.RandSlv(spi_slave_tx'length);
+        spi_master_tx := rnd.RandSlv(spi_master_tx'length);
+        spi_slave_tx  := rnd.RandSlv(spi_slave_tx'length);
 
-        -- Send data to input stream 
+        -- Set up master tx data
         push_axi_stream(net, data_axi_stream_master, spi_master_tx);
+        channel_closed := i = length - 1;
+        check_spi_rx_transaction(net, spi_slave, spi_master_tx, channel_closed);
 
-        -- Push SPI tx transaction to slave, tell slave to check data
+        -- Set up slave tx data
         push_spi_tx_transaction(net, spi_slave, spi_slave_tx);
-
-        -- Queue non-blocking AXI stream checks on data output
         check_axi_stream(net,
                          data_axi_stream_slave,
                          spi_slave_tx,
@@ -123,10 +121,12 @@ begin
                          blocking => false
                         );
 
-        channel_closed := i = length - 1;
-        check_spi_rx_transaction(net, spi_slave, spi_master_tx, channel_closed);
       end loop;
+      
+      -- Start transaction
+      new_spi_transaction(length => length);
     end procedure;
+    
     variable transaction_length : positive;
 
   begin
@@ -139,17 +139,11 @@ begin
     if run("single_byte_test") then
       test_spi_single_byte;
 
-      -- Ensure that all queued transactions has been consumed
-      wait until busy = '0' and rising_edge(clk);
-
     elsif run("test_many_single_byte") then
 
       for i in 0 to 100 - 1 loop
         test_spi_single_byte;
       end loop;
-
-      -- Ensure that all queued transactions has been consumed
-      wait until busy = '0' and rising_edge(clk);
 
     elsif run("test_short_multi_byte_transactions") then
 
@@ -158,13 +152,16 @@ begin
       end loop;
 
     elsif run("test_many_random_multi_byte_transactions") then
-      
+
       for i in 0 to 100 - 1 loop
         transaction_length := rnd.RandInt(1, 128);
         test_spi_multi_byte(transaction_length);
       end loop;
 
     end if;
+
+    -- Ensure that all queued transactions has been consumed
+    wait until busy = '0' and rising_edge(clk);
 
     wait_until_idle(net, spi_slave);
     wait_until_idle(net, as_sync(trx_axi_stream_master));

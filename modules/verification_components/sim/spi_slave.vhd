@@ -86,14 +86,12 @@ begin
 
         check_equal(spi_rx, expected);
         check_equal(channel_closed, channel_closed_expected);
-
       elsif message_type(msg) = spi_slave_msg then
         push(reply_msg, spi_rx);
         push(reply_msg, channel_closed);
 
         -- Reply with received data
         reply(net, msg, reply_msg);
-
       end if;
     end procedure;
   begin
