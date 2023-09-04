@@ -61,6 +61,7 @@ begin
       push_axi_stream(net, trx_axi_stream_master, std_logic_vector(to_unsigned(length, spi_num_bits)));
     end procedure;
 
+    -- Run a single byte transaction synchronous (blocking)
     procedure test_spi_single_byte is
       variable spi_slave_rx, spi_slave_tx   : std_logic_vector(spi_num_bits - 1 downto 0);
       variable spi_master_tx, spi_master_rx : std_logic_vector(spi_num_bits - 1 downto 0);
@@ -96,23 +97,21 @@ begin
       check_true(channel_closed, "SPI channel was not closed");
     end procedure;
 
+    -- Set up input data and run completely asynchronous (non-blocking)
     procedure test_spi_multi_byte(length : positive) is
       variable spi_slave_tx   : std_logic_vector(spi_num_bits - 1 downto 0);
       variable spi_master_tx  : std_logic_vector(spi_num_bits - 1 downto 0);
       variable channel_closed : boolean;
     begin
-
       for i in 0 to length - 1 loop
-        -- Generate input data
-        spi_master_tx := rnd.RandSlv(spi_master_tx'length);
-        spi_slave_tx  := rnd.RandSlv(spi_slave_tx'length);
-
         -- Set up master tx data
+        spi_master_tx := rnd.RandSlv(spi_master_tx'length);
+        channel_closed := i = length - 1;  -- CS should be deasserted after last byte sent
         push_axi_stream(net, data_axi_stream_master, spi_master_tx);
-        channel_closed := i = length - 1;
         check_spi_rx_transaction(net, spi_slave, spi_master_tx, channel_closed);
 
         -- Set up slave tx data
+        spi_slave_tx  := rnd.RandSlv(spi_slave_tx'length);
         push_spi_tx_transaction(net, spi_slave, spi_slave_tx);
         check_axi_stream(net,
                          data_axi_stream_slave,
@@ -120,7 +119,6 @@ begin
                          msg      => "SPI master received wrong data",
                          blocking => false
                         );
-
       end loop;
       
       -- Start transaction

@@ -46,7 +46,7 @@ begin
 
     msg_type := message_type(request_message);
 
-    if msg_type = spi_slave_msg then
+    if msg_type = spi_slave_rx_msg then
       process_tx_transaction(request_message);
     else
       handle_wait_until_idle(net, msg_type, request_message);
@@ -79,14 +79,15 @@ begin
         channel_closed := false;
       end if;
 
-      -- Add received data to msg
       if message_type(msg) = spi_slave_check_msg then
+        -- Check received data
         expected                := pop(msg);
         channel_closed_expected := pop(msg);
 
         check_equal(spi_rx, expected);
         check_equal(channel_closed, channel_closed_expected);
-      elsif message_type(msg) = spi_slave_msg then
+      elsif message_type(msg) = spi_slave_rx_msg then
+        -- Respond with received data
         push(reply_msg, spi_rx);
         push(reply_msg, channel_closed);
 
@@ -98,7 +99,7 @@ begin
     receive(net, slave.rx_actor, request_message);
     msg_type := message_type(request_message);
 
-    if msg_type = spi_slave_msg or msg_type = spi_slave_check_msg then
+    if msg_type = spi_slave_rx_msg or msg_type = spi_slave_check_msg then
       process_rx_transaction(request_message);
     else
       handle_wait_until_idle(net, msg_type, request_message);

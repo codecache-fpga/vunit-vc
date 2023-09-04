@@ -9,7 +9,7 @@ context vunit_lib.vc_context;
 
 package spi_slave_pkg is
 
-  constant spi_slave_msg       : msg_type_t := new_msg_type("spi slave msg");
+  constant spi_slave_rx_msg       : msg_type_t := new_msg_type("spi slave msg");
   constant spi_slave_check_msg : msg_type_t := new_msg_type("spi slave check msg");
   constant spi_slave_reply_msg : msg_type_t := new_msg_type("spi slave reply msg");
 
@@ -56,7 +56,7 @@ package body spi_slave_pkg is
                                     spi_slave        : spi_slave_t;
                                     variable data_tx : in std_logic_vector
                                    ) is
-    variable msg : msg_t := new_msg(spi_slave_msg);
+    variable msg : msg_t := new_msg(spi_slave_rx_msg);
   begin
     push_std_ulogic_vector(msg, data_tx);
     send(net, spi_slave.tx_actor, msg);
@@ -68,7 +68,7 @@ package body spi_slave_pkg is
                                      variable data_rx        : out std_logic_vector;
                                      variable channel_closed : out boolean
                                     ) is
-    variable msg       : msg_t := new_msg(spi_slave_msg);
+    variable msg       : msg_t := new_msg(spi_slave_rx_msg);
     variable reply_msg : msg_t;
   begin
     send(net, spi_slave.rx_actor, msg);
