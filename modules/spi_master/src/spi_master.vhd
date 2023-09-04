@@ -1,9 +1,6 @@
 -- Simple SPI slave supporting SPI mode 0 (CPOL = 0, CPHA = 0)
 -- Output SPI clock is clk divided by 2
 
--- TODO: AXI stream interfaces
--- TODO: Back to back transactions
-
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -24,7 +21,7 @@ entity spi_master is
     data_in         : in  std_logic_vector(spi_num_bits - 1 downto 0);
     -- Data out interface
     data_out_valid  : out std_logic;
-    data_out_tready : in  std_logic;
+    data_out_ready : in  std_logic;
     data_out        : out std_logic_vector(spi_num_bits - 1 downto 0);
     -- SPI interface
     spi_sclk        : out std_logic;
@@ -83,10 +80,10 @@ begin
 
       when wait_for_next_data =>
         -- Wait for a new data sample
-
+        -- Also wait for output stream to be ready
         data_in_ready <= '1';
 
-        if data_in_valid and data_in_ready then
+        if data_in_valid and data_in_ready and data_out_ready then
           data_trx := data_in;
 
           num_trx := num_trx - 1;

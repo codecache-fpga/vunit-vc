@@ -134,23 +134,20 @@ begin
 
     wait until rising_edge(clk);
 
-    if run("single_byte_test") then
+    if run("test_single_byte") then
       test_spi_single_byte;
 
     elsif run("test_many_single_byte") then
-
       for i in 0 to 100 - 1 loop
         test_spi_single_byte;
       end loop;
 
     elsif run("test_short_multi_byte_transactions") then
-
       for i in 1 to 4 loop
         test_spi_multi_byte(i);
       end loop;
 
     elsif run("test_many_random_multi_byte_transactions") then
-
       for i in 0 to 100 - 1 loop
         transaction_length := rnd.RandInt(1, 128);
         test_spi_multi_byte(transaction_length);
@@ -159,12 +156,12 @@ begin
     end if;
 
     -- Ensure that all queued transactions has been consumed
-    wait until busy = '0' and rising_edge(clk);
-
     wait_until_idle(net, spi_slave);
     wait_until_idle(net, as_sync(trx_axi_stream_master));
     wait_until_idle(net, as_sync(data_axi_stream_master));
     wait_until_idle(net, as_sync(data_axi_stream_slave));
+    
+    check_equal(busy, '0');
 
     test_runner_cleanup(runner);
   end process;
@@ -226,7 +223,7 @@ begin
       data_in_ready   => data_in_ready,
       data_in         => data_in,
       data_out_valid  => data_out_valid,
-      data_out_tready => data_out_ready,
+      data_out_ready => data_out_ready,
       data_out        => data_out,
       spi_sclk        => sclk,
       spi_mosi        => mosi,
