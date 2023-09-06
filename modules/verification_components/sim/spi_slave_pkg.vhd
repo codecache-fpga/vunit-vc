@@ -9,7 +9,7 @@ context vunit_lib.vc_context;
 
 package spi_slave_pkg is
 
-  constant spi_slave_rx_msg       : msg_type_t := new_msg_type("spi slave msg");
+  constant spi_slave_rx_msg    : msg_type_t := new_msg_type("spi slave msg");
   constant spi_slave_check_msg : msg_type_t := new_msg_type("spi slave check msg");
   constant spi_slave_reply_msg : msg_type_t := new_msg_type("spi slave reply msg");
 
@@ -22,9 +22,9 @@ package spi_slave_pkg is
 
   impure function new_spi_slave return spi_slave_t;
 
-  procedure push_spi_tx_transaction(signal   net     : inout network_t;
-                                    spi_slave        : spi_slave_t;
-                                    variable data_tx : in std_logic_vector
+  procedure push_spi_tx_transaction(signal net : inout network_t;
+                                    spi_slave  : spi_slave_t;
+                                    data_tx    : std_logic_vector
                                    );
 
   procedure await_spi_rx_transaction(signal   net            : inout network_t;
@@ -52,9 +52,9 @@ package body spi_slave_pkg is
   end function;
 
   -- Send a single byte SPI transaction (non blocking)
-  procedure push_spi_tx_transaction(signal   net     : inout network_t;
-                                    spi_slave        : spi_slave_t;
-                                    variable data_tx : in std_logic_vector
+  procedure push_spi_tx_transaction(signal net : inout network_t;
+                                    spi_slave  : spi_slave_t;
+                                    data_tx    : std_logic_vector
                                    ) is
     variable msg : msg_t := new_msg(spi_slave_rx_msg);
   begin
