@@ -46,10 +46,12 @@ begin
 
     msg_type := message_type(request_message);
 
+    handle_wait_until_idle(net, msg_type, request_message);
+    
     if msg_type = spi_slave_rx_msg then
       process_tx_transaction(request_message);
     else
-      handle_wait_until_idle(net, msg_type, request_message);
+      unexpected_msg_type(msg_type);
     end if;
   end process;
 
@@ -98,11 +100,13 @@ begin
   begin
     receive(net, slave.rx_actor, request_message);
     msg_type := message_type(request_message);
+    
+    handle_wait_until_idle(net, msg_type, request_message);
 
     if msg_type = spi_slave_rx_msg or msg_type = spi_slave_check_msg then
       process_rx_transaction(request_message);
     else
-      handle_wait_until_idle(net, msg_type, request_message);
+      unexpected_msg_type(msg_type);
     end if;
   end process;
 
