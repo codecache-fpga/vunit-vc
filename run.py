@@ -14,7 +14,7 @@ sys.path.insert(0, str(VUNIT_PATH))
 
 OUTPUT_PATH = REPO_ROOT / "out"
 
-MODULES_PATHS = [REPO_ROOT / "modules"]
+MODULES_PATHS = REPO_ROOT / "modules"
 
 # First party libraries
 from tsfpga.examples.simulation_utils import (

@@ -3,4 +3,4 @@
 	url = https://github.com/VUnit/vunit.git
 [submodule "tsfpga"]
 	path = tsfpga
-	url = https://gitlab.com/tsfpga/tsfpga.git
+	url = https://github.com/tsfpga/tsfpga.git
