@@ -5,7 +5,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container: ghdl/vunit:mcode
+    container: docker://ccfpga/vunit-oss:latest
     steps:
       - name: Install git on container
         run: |
