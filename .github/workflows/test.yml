@@ -7,14 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     container: docker://ccfpga/vunit-oss:latest
     steps:
-      - name: Install git on container
-        run: |
-          apt update
-          apt install -y git
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
       - name: Install python dependencies
         run: pip install -r tsfpga/tsfpga/requirements.txt
-      - name: Run  simulations
+      - name: Run simulations
         run: python run.py
