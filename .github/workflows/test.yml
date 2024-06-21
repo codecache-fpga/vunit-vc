@@ -11,6 +11,6 @@ jobs:
         with:
           submodules: 'recursive'
       - name: Install tsfpga requirements
-        run: python3 -m pip install GitPython pytest rtoml vunit-hdl
+        run: python3 -m pip install GitPython pytest rtoml vunit-hdl hdl-registers
       - name: Run simulations
         run: python run.py
