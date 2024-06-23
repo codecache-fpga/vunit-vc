@@ -5,7 +5,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container: docker://hdlc/ghdl:yosys
+    container: docker://ccfpga/vunit-yosys:latest
     steps:
       - uses: actions/checkout@v3
         with:
@@ -16,7 +16,7 @@ jobs:
         run: python run.py
   build:
     runs-on: ubuntu-latest
-    container: docker://hdlc/ghdl:yosys
+    container: docker://ccfpga/vunit-yosys:latest
     steps:
       - uses: actions/checkout@v3
         with:
