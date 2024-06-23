@@ -15,7 +15,9 @@ use osvvm.RandomPkg.all;
 
 entity tb_spi_master is
   generic(
-    runner_cfg : string
+    runner_cfg : string;
+    use_data_fifo : boolean;
+    data_fifo_depth : boolean
   );
 end entity;
 

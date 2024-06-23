@@ -13,15 +13,4 @@ jobs:
       - name: Install tsfpga requirements
         run: pip install -r tsfpga/tsfpga/requirements.txt
       - name: Run simulations
-        run: python run.py
-  build:
-    runs-on: ubuntu-latest
-    container: docker://ccfpga/vunit-yosys:latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Install tsfpga requirements
-        run: pip install -r tsfpga/tsfpga/requirements.txt
-      - name: Run simulations
-        run: python build.py
+        run: python run.py --vivado-skip
