@@ -5,12 +5,16 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container: docker://ccfpga/vunit-yosys
+    container: docker://ccfpga/vunit-oss:latest
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
       - name: Install tsfpga requirements
-        run: python3 -m pip install GitPython rtoml==0.10.0 hdl-registers
+        run: pip install -r tsfpga/tsfpga/requirements.txt
       - name: Run simulations
         run: python run.py
