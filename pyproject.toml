@@ -1,0 +1,11 @@
+[tool.black]
+line_length = 100
+exclude = '''
+(
+  /(
+    vunit
+  | hdl-modules
+  | tsfpga
+  )/
+)
+'''
