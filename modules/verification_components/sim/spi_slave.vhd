@@ -42,13 +42,13 @@ begin
     end procedure;
 
   begin
-    receive(net, slave.tx_actor, request_message);
+    receive(net, slave.p_master_actor, request_message);
 
     msg_type := message_type(request_message);
 
     handle_wait_until_idle(net, msg_type, request_message);
     
-    if msg_type = spi_slave_rx_msg then
+    if msg_type = stream_push_msg then
       process_tx_transaction(request_message);
     else
       unexpected_msg_type(msg_type);
@@ -65,7 +65,7 @@ begin
       variable reply_msg               : msg_t := new_msg(spi_slave_reply_msg);
       variable spi_rx, expected        : std_logic_vector(spi_num_bits - 1 downto 0);
       variable channel_closed          : boolean;
-      variable channel_closed_expected : boolean;
+      variable last : boolean;
     begin
       for bit_num in spi_rx'range loop
         wait until rising_edge(sclk);
@@ -83,12 +83,12 @@ begin
 
       if message_type(msg) = spi_slave_check_msg then
         -- Check received data
-        expected                := pop(msg);
-        channel_closed_expected := pop(msg);
+        expected := pop(msg);
+        last     := pop(msg);
 
         check_equal(spi_rx, expected);
-        check_equal(channel_closed, channel_closed_expected);
-      elsif message_type(msg) = spi_slave_rx_msg then
+        check_equal(channel_closed, last);
+      elsif message_type(msg) = stream_pop_msg then
         -- Respond with received data
         push(reply_msg, spi_rx);
         push(reply_msg, channel_closed);
@@ -98,12 +98,12 @@ begin
       end if;
     end procedure;
   begin
-    receive(net, slave.rx_actor, request_message);
+    receive(net, slave.p_slave_actor, request_message);
     msg_type := message_type(request_message);
     
     handle_wait_until_idle(net, msg_type, request_message);
 
-    if msg_type = spi_slave_rx_msg or msg_type = spi_slave_check_msg then
+    if msg_type = stream_pop_msg or msg_type = spi_slave_check_msg then
       process_rx_transaction(request_message);
     else
       unexpected_msg_type(msg_type);

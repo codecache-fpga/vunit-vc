@@ -25,6 +25,9 @@ architecture sim of tb_spi_master is
 
   constant spi_slave : spi_slave_t := new_spi_slave;
 
+  constant spi_stream_master : stream_master_t := as_stream_master(spi_slave);
+  constant spi_stream_slave : stream_slave_t := as_stream_slave(spi_slave);
+
   constant trx_axi_stream_master  : axi_stream_master_t := new_axi_stream_master(16);
   constant data_axi_stream_master : axi_stream_master_t := new_axi_stream_master(spi_num_bits);
   constant data_axi_stream_slave  : axi_stream_slave_t  := new_axi_stream_slave(spi_num_bits);
@@ -77,7 +80,7 @@ begin
 
       -- Send in data on axi stream channel
       push_axi_stream(net, data_axi_stream_master, spi_master_tx);
-      push_spi_tx_transaction(net, spi_slave, spi_slave_tx);
+      push_stream(net, spi_stream_master, spi_slave_tx);
 
       -- Start transaction
       new_spi_transaction(length => 1);
@@ -86,10 +89,10 @@ begin
       pop_axi_stream(net, data_axi_stream_slave, axi_stream_reference);
 
       -- Wait for slave to receive data
-      await_spi_rx_transaction(net,
-                               spi_slave,
-                               spi_slave_rx,
-                               channel_closed);
+      pop_stream(net,
+                 spi_stream_slave,
+                 spi_slave_rx,
+                 channel_closed);
 
       await_pop_axi_stream_reply(net, axi_stream_reference, tdata => spi_master_rx, tlast => tlast);
 
@@ -114,7 +117,7 @@ begin
 
         -- Set up slave tx data
         spi_slave_tx  := rnd.RandSlv(spi_slave_tx'length);
-        push_spi_tx_transaction(net, spi_slave, spi_slave_tx);
+        push_stream(net, spi_stream_master, spi_slave_tx);
         check_axi_stream(net,
                          data_axi_stream_slave,
                          spi_slave_tx,
