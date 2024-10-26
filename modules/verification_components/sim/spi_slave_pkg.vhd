@@ -13,7 +13,8 @@ context vunit_lib.vc_context;
 package spi_slave_pkg is
 
   constant spi_slave_check_msg : msg_type_t := new_msg_type("spi slave check msg");
-  constant spi_slave_reply_msg : msg_type_t := new_msg_type("spi slave reply msg");
+  constant spi_slave_set_idle_data_msg : msg_type_t := new_msg_type("spi slave set idle data msg");
+  constant spi_slave_clear_idle_data_msg : msg_type_t := new_msg_type("spi slave clear idle data msg");
 
   constant spi_num_bits : positive := 8;
 
@@ -25,6 +26,9 @@ package spi_slave_pkg is
   impure function new_spi_slave return spi_slave_t;
   impure function as_stream_master(spi_slave : spi_slave_t) return stream_master_t;
   impure function as_stream_slave(spi_slave : spi_slave_t) return stream_slave_t;
+
+  procedure set_idle_data(signal net : inout network_t; slave : spi_slave_t; idle_data : std_logic_vector);
+  procedure clear_idle_data(signal net : inout network_t; slave : spi_slave_t);
 
   procedure check_spi_rx_transaction(signal net              : inout network_t;
                                      spi_slave               : spi_slave_t;
@@ -48,12 +52,33 @@ package body spi_slave_pkg is
   begin
     return (p_actor => spi_slave.p_master_actor);
   end function;
-
+      
   impure function as_stream_slave(spi_slave : spi_slave_t) return stream_slave_t is
   begin
     return (p_actor => spi_slave.p_slave_actor);
   end function;
+  
+  -- Set idle data to be sent by slave if no data is queued.
+  -- If no idle data is set and a transaction occurs, simulation will fail.
+  -- All pending tx transactions will be flushed
+  procedure set_idle_data(signal net : inout network_t; slave : spi_slave_t; idle_data : std_logic_vector) is
+    variable msg : msg_t := new_msg(spi_slave_set_idle_data_msg);
+    variable ack : boolean;
+  begin
+    push(msg, idle_data);
+    request(net, slave.p_master_actor, msg, ack);
+    assert ack report "Failed to set idle data";
+  end procedure;
 
+  -- Clear idle data
+  procedure clear_idle_data(signal net : inout network_t; slave : spi_slave_t) is
+    variable msg : msg_t := new_msg(spi_slave_clear_idle_data_msg);
+    variable ack : boolean;
+  begin
+    request(net, slave.p_master_actor, msg, ack);
+    assert ack report "Failed to clear idle data";
+  end procedure;
+          
   -- Check a single byte SPI slave RX transaction (non-blocking)
   -- This consumes a response in the slave
   procedure check_spi_rx_transaction(signal net              : inout network_t;
