@@ -4,13 +4,14 @@
 
 import sys
 
-from common import HDL_MODULES_MODULES_PATH, MODULES_PATH, SIM_OUTPUT_PATH, TSFPGA_PATH, VUNIT_PATH
+from common import HDL_MODULES_MODULES_PATH, MODULES_PATH, REPO_ROOT, SIM_OUTPUT_PATH, TSFPGA_PATH, VUNIT_PATH
 
 sys.path.insert(0, str(TSFPGA_PATH))
 sys.path.insert(0, str(VUNIT_PATH))
 
 from tsfpga.examples.simulation_utils import (
     SimulationProject,
+    create_vhdl_ls_configuration,
     get_arguments_cli,
 )
 from tsfpga.module import get_modules
@@ -21,10 +22,12 @@ def main():
     you probably want to copy and modify this function. The other functions and classes
     should be reusable in most cases.
     """
+    
     cli = get_arguments_cli(default_output_path=SIM_OUTPUT_PATH)
     args = cli.parse_args()
 
     modules = get_modules(MODULES_PATH)
+    create_vhdl_ls_configuration(REPO_ROOT, REPO_ROOT / "tmp", modules=modules)
     
     names_avoid = set(["hard_fifo"]) if args.vivado_skip else set()
     
@@ -35,7 +38,7 @@ def main():
     
     if not args.vivado_skip:
         simulation_project.add_vivado_simlib()
-
+        
     simulation_project.vunit_proj.main()
 
 
