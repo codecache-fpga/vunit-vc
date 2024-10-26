@@ -11,7 +11,7 @@ jobs:
         with:
           submodules: 'recursive'
       - name: Install tsfpga requirements
-        run: pip install -r tsfpga/tsfpga/requirements.txt
+        run: pip install -r tsfpga/tsfpga/requirements.txt --pre
       - name: Run simulations
         run: python run.py --vivado-skip
   lint:
@@ -35,6 +35,6 @@ jobs:
         with:
           submodules: 'recursive'
       - name: Install tsfpga requirements
-        run: pip install -r tsfpga/tsfpga/requirements.txt
+        run: pip install -r tsfpga/tsfpga/requirements.txt --pre
       - name: Synthesize with yosys
         run: python build.py
