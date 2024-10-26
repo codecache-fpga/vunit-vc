@@ -27,7 +27,9 @@ jobs:
         with:
           python-version: '3.10'
       - name: Black
-        run: python -m black . --check
+        run: |
+          pip install black
+          python -m black . --check
   build:
     runs-on: ubuntu-latest
     container: docker://ccfpga/vunit-yosys:latest
