@@ -1,3 +1,6 @@
 out/*
+sim_out/*
+tmp/*
 .vscode/*
 __pycache__/
+vhdl_ls.toml
