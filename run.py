@@ -29,7 +29,7 @@ def main():
     args = cli.parse_args()
 
     modules = get_modules(MODULES_PATH)
-    
+
     # Run this every time to run as often as possible to keep vhdl_ls.toml updated
     create_vhdl_ls_configuration(REPO_ROOT, REPO_ROOT / "tmp", modules=modules)
 
