@@ -25,16 +25,12 @@ from tsfpga.module import get_modules
 
 
 def main():
-    """
-    Main function for the simulation flow. If you are setting up a new simulation environment
-    you probably want to copy and modify this function. The other functions and classes
-    should be reusable in most cases.
-    """
-
     cli = get_arguments_cli(default_output_path=SIM_OUTPUT_PATH)
     args = cli.parse_args()
 
     modules = get_modules(MODULES_PATH)
+    
+    # Run this every time to run as often as possible to keep vhdl_ls.toml updated
     create_vhdl_ls_configuration(REPO_ROOT, REPO_ROOT / "tmp", modules=modules)
 
     names_avoid = set(["hard_fifo"]) if args.vivado_skip else set()

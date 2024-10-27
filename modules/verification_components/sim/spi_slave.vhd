@@ -29,25 +29,30 @@ architecture sim of spi_slave is
 
   signal has_idle_data : boolean := false;
   signal idle_data : std_logic_vector(spi_num_bits - 1 downto 0) := (others => '0');
+
 begin
 
-  tx_handler : process
+  tx_handler : process(cs, sclk)
     variable spi_tx : std_logic_vector(spi_num_bits - 1 downto 0);
-  begin
-    wait until falling_edge(cs);
-
-    while cs = '0' loop
-      if has_idle_data then
-        spi_tx := idle_data;
-      else
-        spi_tx := pop(tx_queue);
+    variable bit_num : natural range 0 to spi_num_bits - 1 := 0;
+    begin
+    if cs = '0' then
+      if falling_edge(sclk) then
+        if bit_num = 0 then
+          if has_idle_data then
+            spi_tx := idle_data;
+          else
+            check_false(is_empty(tx_queue), "Transaction was requested without populating tx data");
+            spi_tx := pop(tx_queue);
+            bit_num := spi_num_bits - 1;
+          end if;
+        else
+          bit_num := bit_num - 1;
+        end if;
       end if;
+    end if;
 
-      for bit_num in spi_tx'high downto 0 loop
-        miso_int <= spi_tx(bit_num);
-        wait until falling_edge(sclk);
-      end loop;
-    end loop;
+    miso_int <= spi_tx(bit_num);
   end process;
 
   tx_msg_handler : process
@@ -68,7 +73,7 @@ begin
       flush(tx_queue);
       acknowledge(net, request_message);
     elsif msg_type = spi_slave_clear_idle_data_msg then
-      has_idle_data <= true;
+      has_idle_data <= false;
       acknowledge(net, request_message);
     else
       unexpected_msg_type(msg_type);
