@@ -3,7 +3,4 @@
 	url = https://github.com/VUnit/vunit.git
 [submodule "tsfpga"]
 	path = tsfpga
-	url = https://github.com/ru551n/tsfpga.git
-[submodule "hdl-modules"]
-	path = hdl-modules
-	url = https://github.com/ru551n/hdl-modules.git
+	url = git@github.com:tsfpga/tsfpga.git
