@@ -8,6 +8,7 @@ from common import (
     MODULES_PATH,
     REPO_ROOT,
     SIM_OUTPUT_PATH,
+    TEMP_OUTPUT_PATH,
     TSFPGA_PATH,
     VUNIT_PATH,
 )
@@ -30,7 +31,7 @@ def main():
     modules = get_modules(MODULES_PATH)
 
     # Run this every time to run as often as possible to keep vhdl_ls.toml updated
-    create_vhdl_ls_configuration(REPO_ROOT, REPO_ROOT / "tmp", modules=modules)
+    create_vhdl_ls_configuration(REPO_ROOT, TEMP_OUTPUT_PATH, modules=modules)
 
     simulation_project = SimulationProject(args=args)
     simulation_project.add_modules(args=args, modules=modules)

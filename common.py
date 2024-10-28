@@ -2,6 +2,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.resolve()
 SIM_OUTPUT_PATH = REPO_ROOT / "sim_out"
+TEMP_OUTPUT_PATH = REPO_ROOT / "tmp"
 BUILD_OUTPUT_PATH = REPO_ROOT / "build_out"
 TSFPGA_PATH = REPO_ROOT / "tsfpga"
 VUNIT_PATH = REPO_ROOT / "vunit"

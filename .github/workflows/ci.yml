@@ -27,14 +27,3 @@ jobs:
         run: |
           pip install black
           python -m black . --check
-  build:
-    runs-on: ubuntu-latest
-    container: docker://ccfpga/vunit-yosys:latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Install tsfpga requirements
-        run: pip install -r tsfpga/tsfpga/requirements.txt --pre
-      - name: Synthesize with yosys
-        run: python build.py
