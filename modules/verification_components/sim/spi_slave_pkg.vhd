@@ -1,6 +1,10 @@
 --------------------------------------------------------------------------------------------------
 -- Copyright (c) Sebastian Hellgren. All rights reserved.
 --------------------------------------------------------------------------------------------------
+
+-- Specific API for SPI slave. VUnit Stream VCI (Verification Component) is also supported, except 
+-- the wait_for_time method.
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -79,8 +83,7 @@ package body spi_slave_pkg is
     assert ack report "Failed to clear idle data";
   end procedure;
           
-  -- Check a single byte SPI slave RX transaction (non-blocking)
-  -- This consumes a response in the slave
+  -- Non-blocking alternative to stream VCI check_stream
   procedure check_spi_rx_transaction(signal net              : inout network_t;
                                      spi_slave               : spi_slave_t;
                                      expected                : std_logic_vector;

@@ -1,4 +1,9 @@
+--------------------------------------------------------------------------------------------------
+-- Copyright (c) Sebastian Hellgren. All rights reserved.
+--------------------------------------------------------------------------------------------------
+
 -- Simple SPI slave supporting SPI mode 0 (CPOL = 0, CPHA = 0)
+-- Supports VUnit Stream VCI, except for wait_for_time.
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -36,23 +41,25 @@ begin
     variable spi_tx : std_logic_vector(spi_num_bits - 1 downto 0);
     variable bit_num : natural range 0 to spi_num_bits - 1 := 0;
     begin
-    if cs = '0' then
-      if falling_edge(sclk) then
-        if bit_num = 0 then
-          if has_idle_data then
-            spi_tx := idle_data;
+      if cs = '1' then
+        bit_num := 0;
+      elsif cs = '0' then
+        if falling_edge(sclk) then
+          if bit_num = 0 then
+            if has_idle_data then
+              spi_tx := idle_data;
+            else
+              check_false(is_empty(tx_queue), "Transaction was requested without populating tx data");
+              spi_tx := pop(tx_queue);
+              bit_num := spi_num_bits - 1;
+            end if;
           else
-            check_false(is_empty(tx_queue), "Transaction was requested without populating tx data");
-            spi_tx := pop(tx_queue);
-            bit_num := spi_num_bits - 1;
+            bit_num := bit_num - 1;
           end if;
-        else
-          bit_num := bit_num - 1;
         end if;
       end if;
-    end if;
 
-    miso_int <= spi_tx(bit_num);
+      miso_int <= spi_tx(bit_num);
   end process;
 
   tx_msg_handler : process
