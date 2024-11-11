@@ -23,13 +23,13 @@ package spi_slave_pkg is
   constant spi_num_bits : positive := 8;
 
   type spi_slave_t is record
-    p_slave_actor : actor_t;
-    p_master_actor : actor_t;
+    p_actor : actor_t;
   end record;
 
   impure function new_spi_slave return spi_slave_t;
   impure function as_stream_master(spi_slave : spi_slave_t) return stream_master_t;
   impure function as_stream_slave(spi_slave : spi_slave_t) return stream_slave_t;
+  impure function as_sync(spi_slave : spi_slave_t) return sync_handle_t;
 
   procedure set_idle_data(signal net : inout network_t; slave : spi_slave_t; idle_data : std_logic_vector);
   procedure clear_idle_data(signal net : inout network_t; slave : spi_slave_t);
@@ -39,27 +39,29 @@ package spi_slave_pkg is
                                      expected                : std_logic_vector;
                                      channel_closed_expected : boolean
                                     );
-
-  procedure wait_until_idle(signal net : inout network_t; spi_slave : spi_slave_t);
 end package;
 
 package body spi_slave_pkg is
 
   impure function new_spi_slave return spi_slave_t is
   begin
-    return (p_slave_actor => new_actor,
-            p_master_actor => new_actor
+    return (p_actor => new_actor
            );
   end function;
 
   impure function as_stream_master(spi_slave : spi_slave_t) return stream_master_t is
   begin
-    return (p_actor => spi_slave.p_master_actor);
+    return (p_actor => spi_slave.p_actor);
   end function;
-      
+
   impure function as_stream_slave(spi_slave : spi_slave_t) return stream_slave_t is
   begin
-    return (p_actor => spi_slave.p_slave_actor);
+    return (p_actor => spi_slave.p_actor);
+  end function;
+
+  impure function as_sync(spi_slave : spi_slave_t) return sync_handle_t is
+  begin
+    return spi_slave.p_actor;
   end function;
   
   -- Set idle data to be sent by slave if no data is queued.
@@ -70,7 +72,7 @@ package body spi_slave_pkg is
     variable ack : boolean;
   begin
     push(msg, idle_data);
-    request(net, slave.p_master_actor, msg, ack);
+    request(net, slave.p_actor, msg, ack);
     assert ack report "Failed to set idle data";
   end procedure;
 
@@ -79,7 +81,7 @@ package body spi_slave_pkg is
     variable msg : msg_t := new_msg(spi_slave_clear_idle_data_msg);
     variable ack : boolean;
   begin
-    request(net, slave.p_master_actor, msg, ack);
+    request(net, slave.p_actor, msg, ack);
     assert ack report "Failed to clear idle data";
   end procedure;
           
@@ -94,14 +96,7 @@ package body spi_slave_pkg is
     push(msg, expected);
     push(msg, channel_closed_expected);
 
-    send(net, spi_slave.p_slave_actor, msg);
-  end procedure;
-
-  -- Wait until SPI slave is idle
-  procedure wait_until_idle(signal net : inout network_t; spi_slave : spi_slave_t) is
-  begin
-    wait_until_idle(net, spi_slave.p_slave_actor);
-    wait_until_idle(net, spi_slave.p_master_actor);
+    send(net, spi_slave.p_actor, msg);
   end procedure;
 
 end package body;

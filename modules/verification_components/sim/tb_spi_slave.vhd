@@ -83,7 +83,7 @@ begin
         check_receive_transaction(data);
       end loop;
 
-      wait_until_idle(net, spi_slave);
+      wait_until_idle(net, as_sync(spi_slave));
 
       -- Perform transactions with master dummy data
       cs <= '0';
@@ -103,7 +103,7 @@ begin
         check_receive_transaction(data);
       end loop;
 
-      wait_until_idle(net, spi_slave);
+      wait_until_idle(net, as_sync(spi_slave));
 
       -- Perform transactions
       cs <= '0';
