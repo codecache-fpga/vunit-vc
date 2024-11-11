@@ -5,8 +5,6 @@ on:
 jobs:
   simulate_ghdl:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/astral-sh/uv:latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,8 +19,6 @@ jobs:
         run: python run.py --vivado-skip -p0
   simulate_nvc:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/astral-sh/uv:latest
     steps:
       - uses: actions/checkout@v4
         with:
