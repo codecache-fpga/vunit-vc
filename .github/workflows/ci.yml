@@ -5,18 +5,24 @@ on:
 jobs:
   simulate_ghdl:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/astral-sh/uv:latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
       - name: Setup GHDL
         uses: ghdl/setup-ghdl-ci@nightly
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
       - name: Install tsfpga requirements
-        run: pip install -r tsfpga/tsfpga/requirements.txt --pre
+        run: uv pip install -r tsfpga/tsfpga/requirements.txt --pre
       - name: Run simulations
         run: python run.py --vivado-skip -p0
   simulate_nvc:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/astral-sh/uv:latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,8 +31,10 @@ jobs:
         uses: nickg/setup-nvc-ci@v1
         with:
           version: latest
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
       - name: Install tsfpga requirements
-        run: pip install -r tsfpga/tsfpga/requirements.txt --pre
+        run: uv pip install -r tsfpga/tsfpga/requirements.txt --pre
       - name: Run simulations
         run: python run.py --vivado-skip -p0
   lint:
