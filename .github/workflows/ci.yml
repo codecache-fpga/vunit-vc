@@ -3,7 +3,7 @@ on:
   push:
   pull_request:
 jobs:
-  test:
+  simulate_ghdl:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -11,6 +11,20 @@ jobs:
           submodules: 'recursive'
       - name: Setup GHDL
         uses: ghdl/setup-ghdl-ci@nightly
+      - name: Install tsfpga requirements
+        run: pip install -r tsfpga/tsfpga/requirements.txt --pre
+      - name: Run simulations
+        run: python run.py --vivado-skip
+  simulate_nvc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - name: Setup NVC
+        uses: nickg/setup-nvc-ci@v1
+        with:
+          version: latest
       - name: Install tsfpga requirements
         run: pip install -r tsfpga/tsfpga/requirements.txt --pre
       - name: Run simulations
@@ -24,7 +38,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      - name: Black
+      - name: ruff
         run: |
-          pip install black
-          python -m black . --check
+          pip install ruff
+          ruff check
