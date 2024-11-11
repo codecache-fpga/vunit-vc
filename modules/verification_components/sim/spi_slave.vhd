@@ -71,9 +71,9 @@ begin
 
   rx_handler : process is
     variable msg : msg_t;
-    variable reply_msg               : msg_t := new_msg;
-    variable spi_rx, expected        : std_logic_vector(spi_num_bits - 1 downto 0);
-    variable channel_closed          : boolean;
+    variable reply_msg : msg_t := new_msg;
+    variable spi_rx, expected : std_logic_vector(spi_num_bits - 1 downto 0);
+    variable channel_closed : boolean;
     variable last : boolean;
     constant key : key_t := get_entry_key(test_runner_cleanup);
   begin
