@@ -11,12 +11,11 @@ jobs:
           submodules: 'recursive'
       - name: Setup GHDL
         uses: ghdl/setup-ghdl-ci@nightly
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
       - name: Install tsfpga requirements
         run: |
           uv venv
-          uv pip install --system -r tsfpga/tsfpga/requirements.txt --pre
+          source .venv/bin/activate
+          uv pip install -r tsfpga/tsfpga/requirements.txt --pre
       - name: Run simulations
         run: python run.py --vivado-skip -p0
   simulate_nvc:
@@ -34,7 +33,8 @@ jobs:
       - name: Install tsfpga requirements
         run: |
           uv venv
-          uv pip install --system -r tsfpga/tsfpga/requirements.txt --pre
+          source .venv/bin/activate
+          uv pip install -r tsfpga/tsfpga/requirements.txt --pre
       - name: Run simulations
         run: python run.py --vivado-skip -p0
   lint:
