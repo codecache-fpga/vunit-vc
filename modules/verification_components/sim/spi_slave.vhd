@@ -98,7 +98,7 @@ begin
     
     if rising_edge(cs) then
       channel_closed := true;
-    elsif rising_edge(sclk) then
+    else 
       channel_closed := false;
     end if;
 
@@ -106,7 +106,7 @@ begin
       -- Check received data
       expected := pop(msg);
       last     := pop(msg);
-
+      
       check_equal(spi_rx, expected);
       check_equal(channel_closed, last);
     elsif message_type(msg) = stream_pop_msg then

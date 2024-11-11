@@ -34,7 +34,7 @@ package spi_slave_pkg is
   procedure set_idle_data(signal net : inout network_t; slave : spi_slave_t; idle_data : std_logic_vector);
   procedure clear_idle_data(signal net : inout network_t; slave : spi_slave_t);
 
-  procedure check_spi_rx_transaction(signal net              : inout network_t;
+  procedure check_spi_transaction(signal net              : inout network_t;
                                      spi_slave               : spi_slave_t;
                                      expected                : std_logic_vector;
                                      channel_closed_expected : boolean
@@ -86,11 +86,11 @@ package body spi_slave_pkg is
   end procedure;
           
   -- Non-blocking alternative to stream VCI check_stream
-  procedure check_spi_rx_transaction(signal net              : inout network_t;
-                                     spi_slave               : spi_slave_t;
-                                     expected                : std_logic_vector;
-                                     channel_closed_expected : boolean
-                                    ) is
+  procedure check_spi_transaction(signal net              : inout network_t;
+                                  spi_slave               : spi_slave_t;
+                                  expected                : std_logic_vector;
+                                  channel_closed_expected : boolean
+                                 ) is
     variable msg : msg_t := new_msg(check_spi_slave_msg);
   begin
     push(msg, expected);

@@ -54,17 +54,26 @@ begin
       end loop;
     end procedure;
 
-    procedure test_rx_transaction(num_transactions : positive := 1) is
+    procedure test_rx_transaction(num_bytes : positive := 1; use_vc_check : boolean := false) is
       variable data : std_logic_vector(spi_num_bits - 1 downto 0);
+      variable last : boolean;
     begin
       cs <= '0';
-      for i in 0 to num_transactions - 1 loop
+      for i in 0 to num_bytes - 1 loop
         data := rnd.RandSlv(data'length);
-        push(rx_check_queue, data);
-        notify(rx_check_new_data);
+        last := i = num_bytes - 1;
+        if use_vc_check then
+          check_spi_transaction(net, spi_slave, data, last);
+        else
+          push(rx_check_queue, data);
+          notify(rx_check_new_data);
+        end if;
+        
         send_transaction(data);
       end loop;
       cs <= '1';
+
+      wait for clk_period;
     end procedure;
 
     procedure check_receive_transaction(data : std_logic_vector) is
@@ -91,6 +100,8 @@ begin
         send_transaction(x"AA");
       end loop;
       cs <= '1';
+
+      wait for clk_period;
     end procedure;
 
     procedure test_bidir_transaction(num_transactions : positive := 1) is
@@ -114,6 +125,8 @@ begin
         send_transaction(data);
       end loop;
       cs <= '1';
+
+      wait for clk_period;
     end procedure;
 
     variable num_bytes : positive;
@@ -142,6 +155,11 @@ begin
       for i in 0 to 100 - 1 loop
         num_bytes := rnd.RandInt(2, 64);
         test_rx_transaction(num_bytes);
+      end loop;
+
+      for i in 0 to 100 - 1 loop
+        num_bytes := rnd.RandInt(2, 64);
+        test_rx_transaction(num_bytes, use_vc_check => true);
       end loop;
 
     elsif run("one_single_byte_tx_transaction") then
@@ -188,6 +206,8 @@ begin
     end if;
 
     wait_until_idle(net, as_sync(spi_slave));
+
+    wait for 10 us;
     test_runner_cleanup(runner);
   end process;
 
