@@ -14,7 +14,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v3
       - name: Install tsfpga requirements
-        run: uv pip install -r tsfpga/tsfpga/requirements.txt --pre
+        run: uv pip install --system -r tsfpga/tsfpga/requirements.txt --pre
       - name: Run simulations
         run: python run.py --vivado-skip -p0
   simulate_nvc:
@@ -30,7 +30,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v3
       - name: Install tsfpga requirements
-        run: uv pip install -r tsfpga/tsfpga/requirements.txt --pre
+        run: uv pip install --system -r tsfpga/tsfpga/requirements.txt --pre
       - name: Run simulations
         run: python run.py --vivado-skip -p0
   lint:
