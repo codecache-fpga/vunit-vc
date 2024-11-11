@@ -37,19 +37,22 @@ architecture sim of spi_slave is
   signal idle_data : std_logic_vector(spi_num_bits - 1 downto 0) := (others => '0');
 
   signal new_rx_msg : event_t;
-  signal tx_complete : event_t;
 begin
 
   tx_handler : process
     variable spi_tx : std_logic_vector(spi_num_bits - 1 downto 0);
     variable bit_num : natural range 0 to spi_num_bits - 1 := 0;
+    constant key : key_t := get_entry_key(test_runner_cleanup);
   begin
     wait until cs'event or sclk'event;
     if cs = '1' then
       bit_num := 0;
-      notify(tx_complete);
+      if is_empty(tx_queue) then
+        unlock(runner, key);
+      end if;
     elsif cs = '0' then
       if falling_edge(sclk) then
+        lock(runner, key);
         if bit_num = 0 then
           if has_idle_data then
             spi_tx := idle_data;
@@ -99,7 +102,7 @@ begin
       channel_closed := false;
     end if;
 
-    if message_type(msg) = spi_slave_check_msg then
+    if message_type(msg) = check_spi_slave_msg then
       -- Check received data
       expected := pop(msg);
       last     := pop(msg);
@@ -126,9 +129,9 @@ begin
     receive(net, slave.p_actor, request_message);
     msg_type := message_type(request_message);
     
-    handle_wait_until_idle(net, msg_type, request_message);
+    handle_sync_message(net, msg_type, request_message);
 
-    if msg_type = stream_pop_msg or msg_type = spi_slave_check_msg then
+    if msg_type = stream_pop_msg or msg_type = check_spi_slave_msg then
       push(rx_queue, request_message);
       notify(new_rx_msg);
     elsif msg_type = stream_push_msg then

@@ -59,7 +59,7 @@ begin
     begin
       cs <= '0';
       for i in 0 to num_transactions - 1 loop
-        data := x"AA"; --rnd.RandSlv(data'length);
+        data := rnd.RandSlv(data'length);
         push(rx_check_queue, data);
         notify(rx_check_new_data);
         send_transaction(data);
@@ -184,10 +184,10 @@ begin
         num_bytes := rnd.RandInt(2, 64);
         test_bidir_transaction(num_bytes);
       end loop;
+    
     end if;
 
-    -- wait_until_idle(net, spi_slave);
-    wait for 500 ns;
+    wait_until_idle(net, as_sync(spi_slave));
     test_runner_cleanup(runner);
   end process;
 

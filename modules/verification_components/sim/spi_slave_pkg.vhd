@@ -16,7 +16,7 @@ context vunit_lib.vc_context;
 
 package spi_slave_pkg is
 
-  constant spi_slave_check_msg : msg_type_t := new_msg_type("spi slave check msg");
+  constant check_spi_slave_msg : msg_type_t := new_msg_type("spi slave check msg");
   constant spi_slave_set_idle_data_msg : msg_type_t := new_msg_type("spi slave set idle data msg");
   constant spi_slave_clear_idle_data_msg : msg_type_t := new_msg_type("spi slave clear idle data msg");
 
@@ -91,7 +91,7 @@ package body spi_slave_pkg is
                                      expected                : std_logic_vector;
                                      channel_closed_expected : boolean
                                     ) is
-    variable msg : msg_t := new_msg(spi_slave_check_msg);
+    variable msg : msg_t := new_msg(check_spi_slave_msg);
   begin
     push(msg, expected);
     push(msg, channel_closed_expected);
