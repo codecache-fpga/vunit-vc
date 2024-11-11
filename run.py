@@ -36,9 +36,6 @@ def main():
     simulation_project = SimulationProject(args=args)
     simulation_project.add_modules(args=args, modules=modules)
 
-    if not args.vivado_skip and simulation_project.vunit_proj.get_simulator_name() != "nvc":
-        simulation_project.add_vivado_simlib()
-
     simulation_project.vunit_proj.main()
 
 
